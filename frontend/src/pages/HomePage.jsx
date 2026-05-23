@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import {
     getOutgoingFriendReqs, getRecommendedUsers, getUserFriends,
     sendFriendRequest,
@@ -18,7 +18,6 @@ import NoFriendsFound from "../components/NoFriendsFound";
 
 const HomePage = () => {
     const queryClient = useQueryClient();
-    const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
 
     const { data: friends = [], isLoading: loadingFriends } = useQuery({
         queryKey: ["friends"],
@@ -40,14 +39,16 @@ const HomePage = () => {
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
     });
 
-    useEffect(() => {
+    const outgoingRequestsIds = useMemo(() => {
         const outgoingIds = new Set();
         if (outgoingFriendReqs && outgoingFriendReqs.length > 0) {
             outgoingFriendReqs.forEach((req) => {
-                outgoingIds.add(req.recipient._id);
+                if (req.recipient?._id) {
+                    outgoingIds.add(req.recipient._id);
+                }
             });
-            setOutgoingRequestsIds(outgoingIds);
         }
+        return outgoingIds;
     }, [outgoingFriendReqs]);
 
     return (
